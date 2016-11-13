@@ -10,6 +10,7 @@ set(EXTERNAL_PROJECT_FOLDER ${CMAKE_CURRENT_LIST_DIR}/${EXTERNAL_PROJECT_NAME})
 #     ${EXTERNAL_PROJECT_FOLDER}
 #     https://github.com/opencv/opencv/archive/3.1.0.zip
 #     ${build-folder}
+#     "make -j4"
 #     -DBUILD_EXAMPLES=OFF
 #     -DBUILD_PERF_TESTS=OFF
 #     -DBUILD_TESTS=OFF
@@ -28,6 +29,7 @@ build_external_project_git(
     https://github.com/opencv/opencv.git
     3.1.0
     ${build-folder}
+    "make -j4"
     -DBUILD_EXAMPLES=OFF
     -DBUILD_PERF_TESTS=OFF
     -DBUILD_TESTS=OFF
