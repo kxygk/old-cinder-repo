@@ -64,6 +64,7 @@ build_external_project_git(
     https://github.com/cinder/Cinder.git
     android_linux
     ${build-folder}
-    "make -j4")
+    "make -j4"
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
 
 set(${EXTERNAL_PROJECT_NAME}_BUILD_DIR ${EXTERNAL_PROJECT_FOLDER}/${build-folder} PARENT_SCOPE)
