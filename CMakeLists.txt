@@ -36,3 +36,13 @@ set_property(TARGET mandelbrot PROPERTY CXX_STANDARD 11)
 
 
 
+get_filename_component( CINDER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/Cinder/src" ABSOLUTE )
+get_filename_component( APP_PATH "${CMAKE_CURRENT_SOURCE_DIR}/" ABSOLUTE )
+include( "${CINDER_PATH}/proj/cmake/modules/cinderMakeApp.cmake" )
+
+# - Basic App
+ci_make_app(
+    APP_NAME    BasicApp
+	SOURCES     ${APP_PATH}/src/BasicApp.cpp
+	CINDER_PATH ${CINDER_PATH}
+)
