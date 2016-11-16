@@ -20,7 +20,6 @@ find_package(OpenCV PATHS ${OpenCV_BUILD_DIR} NO_DEFAULT_PATH REQUIRED)
 add_subdirectory(src)
 
 add_executable(testProgram src/main.cpp)
-include_directories(${OpenCV_INCLUDE_DIRS})
 target_include_directories(testProgram PUBLIC ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(testProgram ${OpenCV_LIBS})
 
