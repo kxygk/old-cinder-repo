@@ -16,12 +16,22 @@ else()
 endif()
     
 add_subdirectory(external)
+
 find_package(OpenCV PATHS ${OpenCV_BUILD_DIR} NO_DEFAULT_PATH REQUIRED)
+find_package(JPEG REQUIRED)
+
 add_subdirectory(src)
+
 
 add_executable(testProgram src/main.cpp)
 target_include_directories(testProgram PUBLIC ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(testProgram ${OpenCV_LIBS})
+
+add_executable(mandelbrot src/mandelbrot.cpp)
+target_include_directories(mandelbrot PUBLIC ${BOOST_INCLUDE_DIR})
+target_include_directories(mandelbrot PUBLIC ${JPEG_INCLUDE_DIR})
+target_link_libraries(mandelbrot ${JPEG_LIBRARIES})
+set_property(TARGET mandelbrot PROPERTY CXX_STANDARD 11)
 
 
 
