@@ -53,3 +53,17 @@ header_only_external_project_url(
     ${EXTERNAL_PROJECT_FOLDER}
     http://downloads.sourceforge.net/project/boost/boost/1.62.0/boost_1_62_0.zip)
 set(${EXTERNAL_PROJECT_NAME}_INCLUDE_DIR ${EXTERNAL_PROJECT_FOLDER}/src PARENT_SCOPE)
+
+
+
+set(EXTERNAL_PROJECT_NAME "Cinder")
+set(EXTERNAL_PROJECT_FOLDER ${CMAKE_CURRENT_LIST_DIR}/${EXTERNAL_PROJECT_NAME})
+build_external_project_git(
+    ${EXTERNAL_PROJECT_NAME}
+    ${EXTERNAL_PROJECT_FOLDER}
+    https://github.com/cinder/Cinder.git
+    android_linux
+    ${build-folder}
+    "make -j4")
+
+set(${EXTERNAL_PROJECT_NAME}_BUILD_DIR ${EXTERNAL_PROJECT_FOLDER}/${build-folder} PARENT_SCOPE)
