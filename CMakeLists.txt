@@ -22,20 +22,19 @@ find_package(JPEG REQUIRED)
 
 add_subdirectory(src)
 
-
+# OpenCV Example
 add_executable(testProgram src/main.cpp)
 target_include_directories(testProgram PUBLIC ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(testProgram ${OpenCV_LIBS})
 
+# Boost (GIL) example (requires libjpg)
 add_executable(mandelbrot src/mandelbrot.cpp)
 target_include_directories(mandelbrot PUBLIC ${BOOST_INCLUDE_DIR})
 target_include_directories(mandelbrot PUBLIC ${JPEG_INCLUDE_DIR})
 target_link_libraries(mandelbrot ${JPEG_LIBRARIES})
 set_property(TARGET mandelbrot PROPERTY CXX_STANDARD 11)
 
-
-
-
+# Cinder examples
 get_filename_component( CINDER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/Cinder/src" ABSOLUTE )
 get_filename_component( APP_PATH "${CMAKE_CURRENT_SOURCE_DIR}/" ABSOLUTE )
 include( "${CINDER_PATH}/proj/cmake/modules/cinderMakeApp.cmake" )
