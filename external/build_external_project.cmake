@@ -143,3 +143,49 @@ function ( header_only_external_project_url
         )
 
 endfunction()
+
+
+
+function ( get_cinder_block
+    PROJ                    # Project
+    CINDER_DIR             # Project Location
+    PROJ_URL                # Where to get project
+    )
+    set(PROJ_FOLDER ${CINDER_DIR}/src/blocks/${CINDER_BLOCK_NAME})
+    set(trigger_build_dir ${PROJ_FOLDER}/../${PROJ}-TempFiles/cmake-trigger-directory)
+
+    #mktemp dir in build tree
+    file(MAKE_DIRECTORY ${trigger_build_dir} ${trigger_build_dir}/build)
+
+    #generate false dependency project
+    set(CMAKE_LIST_CONTENT "
+    cmake_minimum_required(VERSION 3.2.1)
+
+    include(ExternalProject)
+    ExternalProject_add(${PROJ}
+        PREFIX              ${PROJ_FOLDER}/../${PROJ}-TempFiles
+        SOURCE_DIR          ${PROJ_FOLDER}
+        CONFIGURE_COMMAND \"\"
+        URL                 ${PROJ_URL}
+        BUILD_COMMAND       \"\"
+        INSTALL_COMMAND     \"\"
+        CMAKE_ARGS ${ARGN}
+        )
+
+        add_custom_target(trigger_${PROJ})
+        add_dependencies(trigger_${PROJ} ${PROJ})")
+
+#     message(STATUS "%%%%% Configation:")
+#     message(STATUS ">>>>> ${CMAKE_LIST_CONTENT} <<<<<")
+    file(WRITE ${trigger_build_dir}/CMakeLists.txt "${CMAKE_LIST_CONTENT}")
+
+    message(STATUS "%%%%% Configuring ${PROJ}")
+    execute_process(COMMAND ${CMAKE_COMMAND} ..
+        WORKING_DIRECTORY ${trigger_build_dir}/build
+        )
+    message(STATUS "%%%%% Building ${PROJ}")
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .
+        WORKING_DIRECTORY ${trigger_build_dir}/build
+        )
+
+endfunction()

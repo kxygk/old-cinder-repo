@@ -58,13 +58,23 @@ set(${EXTERNAL_PROJECT_NAME}_INCLUDE_DIR ${EXTERNAL_PROJECT_FOLDER}/src PARENT_S
 
 set(EXTERNAL_PROJECT_NAME "Cinder")
 set(EXTERNAL_PROJECT_FOLDER ${CMAKE_CURRENT_LIST_DIR}/${EXTERNAL_PROJECT_NAME})
-build_external_project_git(
+build_external_project_url(
     ${EXTERNAL_PROJECT_NAME}
     ${EXTERNAL_PROJECT_FOLDER}
-    https://github.com/cinder/Cinder.git
-    android_linux
+    https://github.com/cinder/Cinder/archive/master.zip
     ${build-folder}
     "make -j4"
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
-
 set(${EXTERNAL_PROJECT_NAME}_BUILD_DIR ${EXTERNAL_PROJECT_FOLDER}/${build-folder} PARENT_SCOPE)
+set(CINDER_DIR ${EXTERNAL_PROJECT_FOLDER})
+
+set(CINDER_BLOCK_NAME "UI")
+get_cinder_block(
+    ${CINDER_BLOCK_NAME}
+    ${CINDER_DIR}
+    https://github.com/rezaali/Cinder-UI/archive/master.zip)
+# SOURCE
+#file( GLOB CINDER_BLOCK_SOURCE_${CINDER_BLOCK_NAME} ${CINDER_DIR}/src/blocks/CinderUI/src/*.cpp)
+#set(CINDER_BLOCK_SOURCE_${CINDER_BLOCK_NAME} ${CINDER_BLOCK_SOURCE_${CINDER_BLOCK_NAME}} PARENT_SCOPE)
+# INCLUDE
+#set(CINDER_BLOCK_INCLUDE_${CINDER_BLOCK_NAME} ${CINDER_DIR}/src/blocks/CinderUI/src/ PARENT_SCOPE)
