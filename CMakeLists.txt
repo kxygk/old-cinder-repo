@@ -75,3 +75,11 @@ ci_make_app(
 	CINDER_PATH ${CINDER_PATH}
     BLOCKS      UI
 )
+
+ci_make_app(
+    APP_NAME    OpenGL-Tutorial-in-Cinder
+    SOURCES     ${APP_PATH}/src/OpenGL-Tutorial-in-Cinder.cpp 
+	CINDER_PATH ${CINDER_PATH}
+    BLOCKS      UI
+)
+
