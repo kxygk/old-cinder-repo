@@ -61,3 +61,17 @@ ci_make_app(
 	CINDER_PATH ${CINDER_PATH}
 )
 
+# - Cinder-UI
+#file( GLOB CINDERUI_SRC_FILES ${CINDER_PATH}/blocks/CinderUI/src/*.cpp)
+#message(STATUS "%%%%% Configuring ${SRC_FILES}")
+
+# set( SRC_FILES 
+#         ${APP_PATH}/src/CinderUI.cpp 
+#         ${CINDER_BLOCK_SOURCE_CinderUI}
+# )
+ci_make_app(
+    APP_NAME    CinderUI
+    SOURCES     ${APP_PATH}/src/CinderUI.cpp 
+	CINDER_PATH ${CINDER_PATH}
+    BLOCKS      UI
+)
