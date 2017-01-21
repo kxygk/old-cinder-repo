@@ -53,3 +53,11 @@ ci_make_app(
 	SOURCES     ${APP_PATH}/src/OpenGL-Tutorial.cpp
 	CINDER_PATH ${CINDER_PATH}
 )
+
+# - Geometry
+ci_make_app(
+    APP_NAME    GeometryApp
+	SOURCES     ${APP_PATH}/src/GeometryApp.cpp
+	CINDER_PATH ${CINDER_PATH}
+)
+
