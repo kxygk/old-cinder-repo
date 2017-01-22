@@ -1,0 +1,36 @@
+{
+   "ID" : -1,
+   "MINIFIED" : false,
+   "NAME" : "basic",
+   "SUBVIEWS" : [
+      {
+         "ID" : 7,
+         "NAME" : "RED",
+         "TYPE" : "Slider",
+         "VALUE" : 0.55882352590560913
+      },
+      {
+         "ID" : 10,
+         "NAME" : "GREEN",
+         "TYPE" : "Slider",
+         "VALUE" : 0.55882352590560913
+      },
+      {
+         "ID" : 13,
+         "NAME" : "BLUE",
+         "TYPE" : "Slider",
+         "VALUE" : 0.55882352590560913
+      },
+      {
+         "BLUE" : 0.55882352590560913,
+         "GREEN" : 0.55882352590560913,
+         "ID" : 14,
+         "NAME" : "BG COLOR",
+         "RED" : 0.55882352590560913,
+         "TYPE" : "MultiSlider"
+      }
+   ],
+   "TYPE" : "SuperCanvas",
+   "XPOS" : 143,
+   "YPOS" : 77
+}

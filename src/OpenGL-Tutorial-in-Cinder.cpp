@@ -1,3 +1,5 @@
+#include <chrono>
+#include <iostream>
 
 #include "cinder/app/App.h"
 #include "cinder/app/RendererGl.h"
@@ -8,6 +10,7 @@
 using namespace reza::ui;
 using namespace ci;
 using namespace ci::app;
+using namespace std::chrono;
 using namespace std;
 
 class OglTest : public App {
@@ -45,12 +48,15 @@ class OglTest : public App {
     gl::VaoRef m_rectangle_VAO;
     gl::VboRef m_rectangle_VBO;
     gl::VboRef m_rectangle_EBO;
+    
+    steady_clock::time_point m_start_time;
 };
 
 void OglTest::setup()
 {
     setupUI();
     setupGL();
+    m_start_time = steady_clock::now();
 }
 void OglTest::setupUI()
 {
@@ -116,7 +122,7 @@ void OglTest::setupGL()
 void OglTest::setupGL_shaders()
 {
     // this wil compile the shaders and assemble the shader program
-	m_Glsl_flat_orange = 
+    {m_Glsl_flat_orange = 
         gl::GlslProg::create( 
             gl::GlslProg::Format()
                 .vertex(	
@@ -145,39 +151,10 @@ void OglTest::setupGL_shaders()
                             // just set to a constant value
                             color = ourColor;
                         }
-        )));
-        
+        )));}   
     // a shader that takes in texture coordinates and colors
     m_Glsl_textured_with_color =
-        gl::GlslProg::create( 
-            gl::GlslProg::Format()
-                .vertex(	
-                    CI_GLSL( // MACRO for inline GLSL code
-                        330, // GLSL version number
-                        // uniform: vars passed from C++
-                        layout (location = 0) in vec3 position;
-                        // in: per-vertex data supplied by draw()
-                        // so the vertex data of geom::Cube
-                        void main() {
-                            gl_Position = 
-                                vec4(
-                                    position.x,
-                                    position.y,
-                                    position.z,
-                                    1.0);
-                        }))
-                // the fragment shader:
-                // sets the final pixel value
-                .fragment(
-                    CI_GLSL(
-                        330,
-                        out vec4 color; // output color val
-                        uniform vec4 ourColor;
-                        void main( void ) {
-                            // just set to a constant value
-                            color = ourColor;
-                        }
-        )));
+        gl::GlslProg::create(loadAsset( "texture.vert" ), loadAsset( "texture.frag" ) );
 }
 // Initialize values for the vertices
 void OglTest::setupGL_vertices()
@@ -194,23 +171,17 @@ void OglTest::setupGL_vertices()
 
 
     m_rectangle_vertices = {
-        // Positions        // Colors          // Texture Coordinates
-        0.5f,  0.5f, 0.0f, // Top Right
-        0.5f, -0.5f, 0.0f, // Bottom Right
-       -0.5f, -0.5f, 0.0f, // Bottom Left
-       -0.5f,  0.5f, 0.0f  // Top Left
-       /*
         0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f, // Top Right
         0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f, // Bottom Right
        -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f, // Bottom Left
        -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f  // Top Left
-    */};
+    };
     m_rectangle_indices = {
         0, 1, 3, // top triangle half
         1, 2, 3  // bottom triangle half
     };
 }
-// VAO example
+// 1: VAO example
 void OglTest::setupGL_triangle()
 {
 // *** VAO
@@ -249,62 +220,34 @@ void OglTest::setupGL_triangle()
     //     glBindBuffer(GL_ARRAY_BUFFER, 0);
   
     m_triangle_VAO->bind();
-    m_triangle_VBO->bind();
-    
-// *** Vertex Attributes
-// *** Tell the vertex shader how to interpret the data in the VBOs
-    gl::vertexAttribPointer(
-        0,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        3 * sizeof(GLfloat),
-        (const GLvoid*) 0 );
-    
-    gl::enableVertexAttribArray(0);
-
+    {
+        m_triangle_VBO->bind();
+        
+        // *** Vertex Attributes
+        // *** Tell the vertex shader how to interpret the data in the VBOs
+        gl::vertexAttribPointer(
+            0,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            3 * sizeof(GLfloat),
+            (const GLvoid*) 0 );
+        
+        gl::enableVertexAttribArray(0);
+    }
     // Finished configuring the VOA
     m_triangle_VAO->unbind();
-    
 }
-// EBO example
+// 2: EBO + texture example
 void OglTest::setupGL_rectangle()
 {
-// *** VAO
-// *** Stores Data (VBOs) + Vertex Attribute associations
     m_rectangle_VAO = gl::Vao::create();     
-    
-// *** VBO    
-// *** Allocating space for the vertices on the GPU:
-    
-    // Cinder temporarily binds the buffer to GL_ARRAY_BUFFER
-    // (using a scoped bind), and allocated space for it on the GPU
-    // see: Vbo.cpp and BufferObj.cpp
     m_rectangle_VBO = 
         gl::Vbo::create(
-            GL_ARRAY_BUFFER, // the buffer type 
-            // we can bind to different buffers 
-            // as long as they're different types
-            // ie. this is the "buffer target"
+            GL_ARRAY_BUFFER,
             m_rectangle_vertices.size()*sizeof(GLfloat),   // buffer size
             m_rectangle_vertices.data(),           // buffer data
             GL_STATIC_DRAW); // specifies the nature of the memory:
-    // GL_STATIC_DRAW: 
-    //         the data will most likely not change at all or very rarely.
-    // GL_DYNAMIC_DRAW: 
-    //     the data is likely to change a lot.
-    // GL_STREAM_DRAW: 
-    //     the data will change every time it is drawn.
-
-    // equivalent to :
-    //     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    //     glBufferData(
-    //         GL_ARRAY_BUFFER,
-    //         sizeof(vertices),
-    //         vertices,
-    //         GL_STATIC_DRAW);
-    //     glBindBuffer(GL_ARRAY_BUFFER, 0);
-        
 // *** EBO
 // *** Element Buffer Object - holds the indeces of the verts in the VBO
     m_rectangle_EBO = 
@@ -323,15 +266,16 @@ void OglTest::setupGL_rectangle()
     
 // *** Vertex Attributes
 // *** Tell the vertex shader how to interpret the data in the VBOs
-    gl::vertexAttribPointer(
-        0,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        3 * sizeof(GLfloat),
-        (const GLvoid*) 0 );
     
+    // Position attribute
+    gl::vertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
     gl::enableVertexAttribArray(0);
+    // Color attribute
+    gl::vertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+    gl::enableVertexAttribArray(1);
+    // TexCoord attribute
+    gl::vertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+    gl::enableVertexAttribArray(2);
 
     // Finished configuring the VOA
     m_rectangle_VAO->unbind();
@@ -344,40 +288,50 @@ void OglTest::update()
 void OglTest::draw()
 {
 	gl::clear( Color( 0.2, 0.3, 0.4 ) );
-   
-    // find where the color value is
-    m_Glsl_textured_with_color->uniform(
-        "ourColor",
-        vec4(mRed,mGreen,mBlue,1.0f)); 
+    gl::clear(GL_COLOR_BUFFER_BIT);
+
+    
+    steady_clock::time_point now = steady_clock::now();
+    duration<float> time_span = duration_cast<duration<float>>(now - m_start_time);
+    auto degrees = time_span.count()*3.0f;// % 5;
+    auto radians = degrees * float(M_PI) / 180.0f; 
+    
+    glm::mat4 trans;
+    trans = glm::rotate(trans, radians, glm::vec3(0.0, 0.0, 1.0)); 
+    trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+
+    m_Glsl_textured_with_color->uniform("transform",trans);
+    
     m_Glsl_textured_with_color->bind();
+    m_rectangle_texture->bind();
+    m_rectangle_VAO->bind();
     {
-        gl::polygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        m_rectangle_VAO->bind();
-        {
-            gl::drawElements(
-                GL_TRIANGLES,
-                6,
-                GL_UNSIGNED_INT,
-                0);
-        }
-        m_rectangle_VAO->unbind();
+        gl::drawElements(
+            GL_TRIANGLES,
+            6,
+            GL_UNSIGNED_INT,
+            0);
     }
+    m_rectangle_VAO->unbind();
+    
+
     // find where the color value is
     m_Glsl_flat_orange->uniform(
         "ourColor",
         vec4(mRed,mGreen,mBlue,1.0f)); 
+    
+    
     m_Glsl_flat_orange->bind();
+    m_triangle_VAO->bind();
     {
-        gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        m_triangle_VAO->bind();
-        {
-            gl::drawArrays(
-                GL_TRIANGLES,
-                0,
-                3);
-        }
-        m_triangle_VAO->unbind();
+        gl::drawArrays(
+            GL_TRIANGLES,
+            0,
+            3);
     }
+    m_triangle_VAO->unbind();
+//     gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 }
 
 void OglTest::cleanup()
