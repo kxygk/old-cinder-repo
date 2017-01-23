@@ -225,13 +225,14 @@ void OglTest::setupGL_triangle()
         
         // *** Vertex Attributes
         // *** Tell the vertex shader how to interpret the data in the VBOs
+        // *** to put it in to the vertex inputs
         gl::vertexAttribPointer(
-            0,
-            3,
-            GL_FLOAT,
-            GL_FALSE,
-            3 * sizeof(GLfloat),
-            (const GLvoid*) 0 );
+            0, // which attribute we are configuring (from layout = ?)
+            3, // size of the vertex attribute (vec3 has 3 values)
+            GL_FLOAT, // the type of the values
+            GL_FALSE, // normalize data or not
+            3 * sizeof(GLfloat), // space btwn vertex attribute sets
+            (const GLvoid*) 0 ); // data start offset
         
         gl::enableVertexAttribArray(0);
     }
@@ -252,32 +253,41 @@ void OglTest::setupGL_rectangle()
 // *** Element Buffer Object - holds the indeces of the verts in the VBO
     m_rectangle_EBO = 
         gl::Vbo::create(
-            GL_ELEMENT_ARRAY_BUFFER, // the buffer type 
-            // we can bind to different buffers 
-            // as long as they're different types
-            // ie. this is the "buffer target"
+            GL_ELEMENT_ARRAY_BUFFER, // EBO! this time
             m_rectangle_indices.size()*sizeof(GLuint),   // buffer size
             m_rectangle_indices.data(),           // buffer data
             GL_STATIC_DRAW); // specifies the nature of the memory:
   
     m_rectangle_VAO->bind();
-    m_rectangle_VBO->bind();
-    m_rectangle_EBO->bind();
-    
-// *** Vertex Attributes
-// *** Tell the vertex shader how to interpret the data in the VBOs
-    
-    // Position attribute
-    gl::vertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
-    gl::enableVertexAttribArray(0);
-    // Color attribute
-    gl::vertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-    gl::enableVertexAttribArray(1);
-    // TexCoord attribute
-    gl::vertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
-    gl::enableVertexAttribArray(2);
+    {
+        m_rectangle_VBO->bind();
+        m_rectangle_EBO->bind();
+        
+        // *** Vertex Attributes
+        // *** Tell the vertex shader how to interpret the data in the VBOs
+        // *** to put it in to the vertex inputs
 
-    // Finished configuring the VOA
+        // NOTE How it's unrelated to the EBO! B/c it's defining 
+        // colors and textures for the verteces
+        
+        // Position attribute 
+        // (second input to vertex shader, ie. 0)
+        gl::vertexAttribPointer(
+            0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
+        gl::enableVertexAttribArray(0);
+        
+        // Color attribute 
+        // (second input, 1)
+        gl::vertexAttribPointer(
+            1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+        gl::enableVertexAttribArray(1);
+        
+        // TexCoord attribute 
+        // (third input, 2)
+        gl::vertexAttribPointer(
+            2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+        gl::enableVertexAttribArray(2);
+    }
     m_rectangle_VAO->unbind();
     
 }
@@ -290,7 +300,6 @@ void OglTest::draw()
 	gl::clear( Color( 0.2, 0.3, 0.4 ) );
     gl::clear(GL_COLOR_BUFFER_BIT);
 
-    
     steady_clock::time_point now = steady_clock::now();
     duration<float> time_span = duration_cast<duration<float>>(now - m_start_time);
     auto degrees = time_span.count()*3.0f;// % 5;
