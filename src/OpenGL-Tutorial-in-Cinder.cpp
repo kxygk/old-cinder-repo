@@ -38,13 +38,14 @@ class OglTest : public App {
 	gl::GlslProgRef m_Glsl_flat_orange;
 	gl::GlslProgRef m_Glsl_textured_with_color;
     
+    gl::TextureRef m_wooden_crate_texture;
+
     vector<GLfloat> m_triangle_vertices;
     gl::VaoRef m_triangle_VAO;
     gl::VboRef m_triangle_VBO;
     
     vector<GLfloat> m_rectangle_vertices;
     vector<GLuint> m_rectangle_indices;
-    gl::TextureRef m_rectangle_texture;
     gl::VaoRef m_rectangle_VAO;
     gl::VboRef m_rectangle_VBO;
     gl::VboRef m_rectangle_EBO;
@@ -159,16 +160,16 @@ void OglTest::setupGL_shaders()
 // Initialize values for the vertices
 void OglTest::setupGL_vertices()
 {
+    m_wooden_crate_texture =
+        gl::Texture::create(
+            loadImage(
+                loadAsset( "container.jpg" ) ) );
+
     m_triangle_vertices = {
         -0.2f, -0.2f, 0.0f, // Left  
          0.2f, -0.2f, 0.0f, // Right 
          0.0f,  0.2f, 0.0f  // Top
     };
-    m_rectangle_texture = 
-        gl::Texture::create(
-            loadImage(
-                loadAsset( "container.jpg" ) ) );
-
 
     m_rectangle_vertices = {
         0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f, // Top Right
@@ -312,7 +313,7 @@ void OglTest::draw()
     m_Glsl_textured_with_color->uniform("transform",trans);
     
     m_Glsl_textured_with_color->bind();
-    m_rectangle_texture->bind();
+    m_wooden_crate_texture->bind();
     m_rectangle_VAO->bind();
     {
         gl::drawElements(
