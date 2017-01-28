@@ -28,6 +28,12 @@ class OglTest : public App {
     void setupGL_vertices();
     void setupGL_triangle();
     void setupGL_rectangle();
+    void setupGL_cube();
+    
+    void draw_triangle();
+    void draw_rectangle(float time_seconds);
+    void draw_cube(float time_seconds);
+    
     
     SuperCanvasRef mUi;
     float mRed = 0.0;
@@ -50,11 +56,17 @@ class OglTest : public App {
     gl::VboRef m_rectangle_VBO;
     gl::VboRef m_rectangle_EBO;
     
+    vector<GLfloat> m_cube_vertices;
+    gl::VaoRef m_cube_VAO;
+    gl::VboRef m_cube_VBO;
+
     steady_clock::time_point m_start_time;
 };
 
 void OglTest::setup()
 {
+    setWindowSize(1000,1000);
+    
     setupUI();
     setupGL();
     m_start_time = steady_clock::now();
@@ -118,6 +130,7 @@ void OglTest::setupGL()
     setupGL_vertices();
     setupGL_triangle();
     setupGL_rectangle();
+    setupGL_cube();
 }
 // GLSL example
 void OglTest::setupGL_shaders()
@@ -180,6 +193,50 @@ void OglTest::setupGL_vertices()
     m_rectangle_indices = {
         0, 1, 3, // top triangle half
         1, 2, 3  // bottom triangle half
+    };
+    
+    m_cube_vertices = {
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
 }
 // 1: VAO example
@@ -292,21 +349,62 @@ void OglTest::setupGL_rectangle()
     m_rectangle_VAO->unbind();
     
 }
+// 2: EBO + texture example
+void OglTest::setupGL_cube()
+{
+    
+    m_cube_VAO = gl::Vao::create();     
+    m_cube_VBO = 
+        gl::Vbo::create(
+            GL_ARRAY_BUFFER,
+            m_cube_vertices.size()*sizeof(GLfloat),   // buffer size
+            m_cube_vertices.data(),           // buffer data
+            GL_STATIC_DRAW); // specifies the nature of the memory:
+  
+    m_cube_VAO->bind();
+    {
+        m_cube_VBO->bind();
+        // Position attribute 
+        gl::vertexAttribPointer(
+            0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+        gl::enableVertexAttribArray(0);
+        
+        // TexCoord attribute 
+        gl::vertexAttribPointer(
+            2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+        gl::enableVertexAttribArray(2);
+    }
+    m_cube_VAO->unbind();
+    
+}
 void OglTest::update()
 {
 }
 
-void OglTest::draw()
+void OglTest::draw_triangle()
 {
-	gl::clear( Color( 0.2, 0.3, 0.4 ) );
-    gl::clear(GL_COLOR_BUFFER_BIT);
-
-    steady_clock::time_point now = steady_clock::now();
-    duration<float> time_span = duration_cast<duration<float>>(now - m_start_time);
-    auto degrees = time_span.count()*3.0f;// % 5;
-    auto radians = degrees * float(M_PI) / 180.0f; 
+    // find where the color value is
+    m_Glsl_flat_orange->uniform(
+        "ourColor",
+        vec4(mRed,mGreen,mBlue,1.0f)); 
     
+    
+    m_Glsl_flat_orange->bind();
+    m_triangle_VAO->bind();
+    {
+        gl::drawArrays(
+            GL_TRIANGLES,
+            0,
+            3);
+    }
+    m_triangle_VAO->unbind();
+
+}
+void OglTest::draw_rectangle(float time_seconds)
+{
+    auto radians = time_seconds * 3.0f * float(M_PI) / 180.0f;
     glm::mat4 trans;
+    trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
     trans = glm::rotate(trans, radians, glm::vec3(0.0, 0.0, 1.0)); 
     trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
 
@@ -323,25 +421,50 @@ void OglTest::draw()
             0);
     }
     m_rectangle_VAO->unbind();
+}
+void OglTest::draw_cube(float time_seconds)
+{
+    auto radians = time_seconds * 100.0f*mRed * float(M_PI) / 180.0f;
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 projection;
+    model = glm::rotate(model, radians, glm::vec3(0.5f, 1.0f, 0.0f));
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    // Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+    projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
     
+    m_Glsl_textured_with_color->bind();
+    
+    m_Glsl_textured_with_color->uniform("model",model);
+    m_Glsl_textured_with_color->uniform("view",view);
+    m_Glsl_textured_with_color->uniform("projection",projection);
 
-    // find where the color value is
-    m_Glsl_flat_orange->uniform(
-        "ourColor",
-        vec4(mRed,mGreen,mBlue,1.0f)); 
+    m_wooden_crate_texture->bind();
     
-    
-    m_Glsl_flat_orange->bind();
-    m_triangle_VAO->bind();
+    m_cube_VAO->bind();
     {
-        gl::drawArrays(
-            GL_TRIANGLES,
-            0,
-            3);
+        gl::drawArrays(GL_TRIANGLES,0,36);
     }
-    m_triangle_VAO->unbind();
-//     gl::polygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+    m_cube_VAO->unbind();
+}
+void OglTest::draw()
+{
+	gl::clear( Color( 0.2, 0.3, 0.4 ) );
+    gl::clear(GL_COLOR_BUFFER_BIT);
+    
+    // enable the Z-buffer
+    gl::enableDepthRead();
+    gl::enableDepthWrite();
+    
+    steady_clock::time_point now = steady_clock::now();
+    duration<float> time_span = duration_cast<duration<float>>(now - m_start_time);
+   
+    // needs a separate shader... 
+    // clashes with the cube one
+    // draw_rectangle(time_span.count()); 
+    
+    draw_triangle();
+    draw_cube(time_span.count());
 }
 
 void OglTest::cleanup()
@@ -357,4 +480,3 @@ fs::path OglTest::getSaveLoadPath()
 }
 
 CINDER_APP( OglTest, RendererGl )
-
