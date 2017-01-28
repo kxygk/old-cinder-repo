@@ -32,7 +32,8 @@ class OglTest : public App {
     
     void draw_triangle();
     void draw_rectangle(float time_seconds);
-    void draw_cube(float time_seconds);
+    void draw_cubes(float time_seconds);
+    void draw_cube(float time_seconds, glm::vec3 position);
     
     
     SuperCanvasRef mUi;
@@ -57,6 +58,7 @@ class OglTest : public App {
     gl::VboRef m_rectangle_EBO;
     
     vector<GLfloat> m_cube_vertices;
+    vector<glm::vec3> m_cube_positions;
     gl::VaoRef m_cube_VAO;
     gl::VboRef m_cube_VBO;
 
@@ -66,7 +68,7 @@ class OglTest : public App {
 void OglTest::setup()
 {
     setWindowSize(1000,1000);
-    
+    cout << "Frame rate" << getFrameRate() << endl;
     setupUI();
     setupGL();
     m_start_time = steady_clock::now();
@@ -237,6 +239,19 @@ void OglTest::setupGL_vertices()
         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
         -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
         -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    };
+        // World space positions of our cubes
+     m_cube_positions = {
+        glm::vec3( 0.0f,  0.0f,  0.0f),
+        glm::vec3( 2.0f,  5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3( 2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f,  3.0f, -7.5f),
+        glm::vec3( 1.3f, -2.0f, -2.5f),
+        glm::vec3( 1.5f,  2.0f, -2.5f),
+        glm::vec3( 1.5f,  0.2f, -1.5f),
+        glm::vec3(-1.3f,  1.0f, -1.5f)
     };
 }
 // 1: VAO example
@@ -422,14 +437,24 @@ void OglTest::draw_rectangle(float time_seconds)
     }
     m_rectangle_VAO->unbind();
 }
-void OglTest::draw_cube(float time_seconds)
+void OglTest::draw_cubes(float time_seconds)
+{
+    for(auto position:m_cube_positions)
+    {
+        draw_cube(time_seconds,position);
+    }
+    //draw_cube(time_seconds,glm::vec3(0.0f, 0.0f, -3.0f));
+}
+void OglTest::draw_cube(float time_seconds, glm::vec3 position)
 {
     auto radians = time_seconds * 100.0f*mRed * float(M_PI) / 180.0f;
     glm::mat4 model;
     glm::mat4 view;
     glm::mat4 projection;
-    model = glm::rotate(model, radians, glm::vec3(0.5f, 1.0f, 0.0f));
+    model = glm::translate(model, position);
+    model = glm::rotate(model, radians, position);//glm::vec3(0.5f, 1.0f, 0.0f));
     view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+//    view = glm::translate(view, position);
     // Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
     projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
     
@@ -464,7 +489,7 @@ void OglTest::draw()
     // draw_rectangle(time_span.count()); 
     
     draw_triangle();
-    draw_cube(time_span.count());
+    draw_cubes(time_span.count());
 }
 
 void OglTest::cleanup()
