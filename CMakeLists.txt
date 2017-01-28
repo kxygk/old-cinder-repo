@@ -46,14 +46,6 @@ ci_make_app(
 	CINDER_PATH ${CINDER_PATH}
 )
 
-
-# - OpenGL tutorial
-ci_make_app(
-    APP_NAME    OpenGL-Tutorial
-	SOURCES     ${APP_PATH}/src/OpenGL-Tutorial.cpp
-	CINDER_PATH ${CINDER_PATH}
-)
-
 # - Geometry
 ci_make_app(
     APP_NAME    GeometryApp
