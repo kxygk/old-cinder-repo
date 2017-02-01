@@ -4,6 +4,8 @@
 #include "cinder/app/App.h"
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
+#include "cinder/Camera.h"
+#include "cinder/CameraUi.h"
 
 #include "UI.h"
 
@@ -33,8 +35,10 @@ class OglTest : public App {
     void draw_triangle();
     void draw_rectangle(float time_seconds);
     void draw_cubes(float time_seconds);
-    void draw_cube(float time_seconds, glm::vec3 position);
+    void draw_lamp();
+    void draw_cube(gl::GlslProgRef shader, float time_seconds, glm::vec3 position,float scale_factor);
     
+    void keyDown( KeyEvent key_event) override;
     
     SuperCanvasRef mUi;
     float mRed = 0.0;
@@ -44,6 +48,7 @@ class OglTest : public App {
     
 	gl::GlslProgRef m_Glsl_flat_orange;
 	gl::GlslProgRef m_Glsl_textured_with_color;
+    gl::GlslProgRef m_Glsl_lamp_box;
     
     gl::TextureRef m_wooden_crate_texture;
 
@@ -63,11 +68,22 @@ class OglTest : public App {
     gl::VboRef m_cube_VBO;
 
     steady_clock::time_point m_start_time;
+    
+    CameraPersp m_camera;
+    CameraUi m_mouse_camera;
 };
 
 void OglTest::setup()
 {
     setWindowSize(1000,1000);
+    m_camera = CameraPersp(1000,1000,45.0f);
+    m_camera.setPerspective(45.0f,1.0f,0.1f,1000.0f);
+        //projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
+    m_camera.setEyePoint(glm::vec3(0.0f, 0.0f, 3.0f));
+    m_camera.lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
+    m_mouse_camera.setCamera(&m_camera);
+    m_mouse_camera.connect(getWindow());
+    
     cout << "Frame rate" << getFrameRate() << endl;
     setupUI();
     setupGL();
@@ -170,7 +186,14 @@ void OglTest::setupGL_shaders()
         )));}   
     // a shader that takes in texture coordinates and colors
     m_Glsl_textured_with_color =
-        gl::GlslProg::create(loadAsset( "texture.vert" ), loadAsset( "texture.frag" ) );
+        gl::GlslProg::create(
+            loadAsset( "texture.vert" ),
+            loadAsset( "texture.frag" ) );
+        
+    m_Glsl_lamp_box =
+        gl::GlslProg::create(
+            loadAsset( "lamp-box.vert" ),
+            loadAsset( "lamp-box.frag" ) );    
 }
 // Initialize values for the vertices
 void OglTest::setupGL_vertices()
@@ -441,28 +464,33 @@ void OglTest::draw_cubes(float time_seconds)
 {
     for(auto position:m_cube_positions)
     {
-        draw_cube(time_seconds,position);
+        draw_cube(m_Glsl_textured_with_color, time_seconds,position,1.0f);
     }
     //draw_cube(time_seconds,glm::vec3(0.0f, 0.0f, -3.0f));
 }
-void OglTest::draw_cube(float time_seconds, glm::vec3 position)
+void OglTest::draw_lamp()
+{
+    draw_cube(m_Glsl_lamp_box,0.0f,vec3(0.1f,0.1f,0.1f),0.3f);
+}
+void OglTest::draw_cube(gl::GlslProgRef shader, float time_seconds, glm::vec3 position,float scale_factor)
 {
     auto radians = time_seconds * 100.0f*mRed * float(M_PI) / 180.0f;
+    
+    shader->bind();
+    
     glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 projection;
     model = glm::translate(model, position);
     model = glm::rotate(model, radians, position);//glm::vec3(0.5f, 1.0f, 0.0f));
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-//    view = glm::translate(view, position);
-    // Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-    projection = glm::perspective(45.0f, 1.0f, 0.1f, 100.0f);
+    model = glm::scale(model, glm::vec3(scale_factor));
+    shader->uniform("model",model);
     
-    m_Glsl_textured_with_color->bind();
+    glm::mat4 view;
+    view = m_camera.getViewMatrix();
+    shader->uniform("view",view);
     
-    m_Glsl_textured_with_color->uniform("model",model);
-    m_Glsl_textured_with_color->uniform("view",view);
-    m_Glsl_textured_with_color->uniform("projection",projection);
+    glm::mat4 projection;
+    projection = m_camera.getProjectionMatrix();
+    shader->uniform("projection",projection);    
 
     m_wooden_crate_texture->bind();
     
@@ -488,8 +516,9 @@ void OglTest::draw()
     // clashes with the cube one
     // draw_rectangle(time_span.count()); 
     
-    draw_triangle();
+    //draw_triangle();
     draw_cubes(time_span.count());
+    draw_lamp();
 }
 
 void OglTest::cleanup()
@@ -497,6 +526,16 @@ void OglTest::cleanup()
     mUi->save( getSaveLoadPath() );
 }
 
+void OglTest::keyDown( KeyEvent key_event)
+{
+    if( key_event.getCode() == KeyEvent::KEY_c)
+    {
+        if(m_mouse_camera.isEnabled())
+            m_mouse_camera.disable();
+        else
+            m_mouse_camera.enable();
+    }
+}
 fs::path OglTest::getSaveLoadPath()
 {
     fs::path path = getAssetPath( "" );
