@@ -1,11 +1,17 @@
 #include <chrono>
 #include <iostream>
+#include <stdlib.h>
 
 #include "cinder/app/App.h"
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
 #include "cinder/Camera.h"
 #include "cinder/CameraUi.h"
+
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+ 
+using namespace cv;
 
 #include "UI.h"
 
@@ -32,14 +38,26 @@ class OglTest : public App {
     void setupGL_rectangle();
     void setupGL_cube();
     
+    void setupMesh();
+
+
     void draw_triangle();
     void draw_rectangle(float time_seconds);
     void draw_cubes(float time_seconds);
     void draw_lamp();
     void draw_cube(gl::GlslProgRef shader, float time_seconds, glm::vec3 position,float scale_factor);
+    void draw_mesh();
     
     void keyDown( KeyEvent key_event) override;
     
+    void triangles2dToVerticesAndIndices(
+        const vector<Vec6f> triangle_list,
+        vector<Vec2f>& vertex_list,
+        vector<int>& index_list);
+    void Vec2fToVec3fWithRandomValues(
+        const vector<Vec2f>& vertex_list_2d,
+        vector<Vec3f>& vertex_list_3d);
+
     SuperCanvasRef mUi;
     float mRed = 0.0;
     float mGreen = 0.0;
@@ -67,6 +85,12 @@ class OglTest : public App {
     gl::VaoRef m_cube_VAO;
     gl::VboRef m_cube_VBO;
 
+    vector<GLfloat> m_mesh_vertices;
+    gl::VaoRef m_mesh_VAO;
+    gl::VboRef m_mesh_VBO;
+    gl::VboRef m_mesh_EBO;
+    int m_mesh_number_of_indeces;
+
     steady_clock::time_point m_start_time;
     
     CameraPersp m_camera;
@@ -84,6 +108,7 @@ void OglTest::setup()
     m_mouse_camera.setCamera(&m_camera);
     m_mouse_camera.connect(getWindow());
     
+    setupMesh();
     cout << "Frame rate" << getFrameRate() << endl;
     setupUI();
     setupGL();
@@ -391,7 +416,6 @@ void OglTest::setupGL_rectangle()
 // 2: EBO + texture example
 void OglTest::setupGL_cube()
 {
-    
     m_cube_VAO = gl::Vao::create();     
     m_cube_VBO = 
         gl::Vbo::create(
@@ -415,6 +439,107 @@ void OglTest::setupGL_cube()
     }
     m_cube_VAO->unbind();
     
+}
+void OglTest::setupMesh()
+{
+    Subdiv2D opencv_triangle_generator = Subdiv2D(Rect(0,0,1.0f,1.0f));
+    // insert random points
+    //srand(1);
+    srand(duration_cast<duration<float>>(steady_clock::now() - m_start_time).count());
+    for(int i = 0; i !=50; ++i)
+    {
+        opencv_triangle_generator.insert(
+            Point2f(
+                static_cast<float>( rand() ) / static_cast<float>( RAND_MAX ),
+                static_cast<float>( rand() ) / static_cast<float>( RAND_MAX )));
+    }
+    vector<Vec6f> triangle_list;
+    opencv_triangle_generator.getTriangleList(triangle_list);
+    cout << "Number of dirty triangles: " << triangle_list.size() << endl;
+    
+    // due to some OpenCV bug there are 3 extra vertices.
+    // Their associated triangles need to be removed
+    vector<Vec6f> clean_triangles;
+    for(auto triangle : triangle_list)
+    {
+        if( triangle[0] != 3 &&
+            triangle[1] != 3 &&
+            triangle[2] != 3 &&
+            triangle[3] != 3 &&
+            triangle[4] != 3 &&
+            triangle[5] != 3 &&
+            triangle[0] != -3 &&
+            triangle[1] != -3 &&
+            triangle[2] != -3 &&
+            triangle[3] != -3 &&
+            triangle[4] != -3 &&
+            triangle[5] != -3 )
+        {
+            clean_triangles.push_back(triangle);
+        }
+    }
+    
+    // 2D triangles to EBO
+    // ...
+    vector<Vec2f> vertex_list_2d;
+    vector<int> index_list;
+    triangles2dToVerticesAndIndices(
+        clean_triangles,
+        vertex_list_2d,
+        index_list);
+    
+    vector<Vec3f> vertex_list_3d;
+    Vec2fToVec3fWithRandomValues(
+        vertex_list_2d,
+        vertex_list_3d);
+    
+    // due to Vec2f and Vec3f's data types, the numbers are sequential
+    // need to put into temp buffers
+    vector<GLfloat> vertex_buffer;
+    for(auto vertex : vertex_list_3d)
+    {
+        vertex_buffer.push_back(vertex[0]);
+        vertex_buffer.push_back(vertex[1]);
+        vertex_buffer.push_back(vertex[2]);
+    }
+    vector<GLint> index_buffer;
+    for(auto index : index_list)
+    {
+        index_buffer.push_back(index);
+    }
+    m_mesh_number_of_indeces = index_buffer.size(); // needed for drawing
+    
+    m_mesh_VAO = gl::Vao::create();     
+    m_mesh_VBO = 
+        gl::Vbo::create(
+            GL_ARRAY_BUFFER,
+            vertex_buffer.size()*sizeof(GLfloat),   // buffer size
+            vertex_buffer.data(),           // buffer data
+            GL_STATIC_DRAW); // specifies the nature of the memory:
+
+    m_mesh_EBO = 
+        gl::Vbo::create(
+            GL_ELEMENT_ARRAY_BUFFER, // EBO! this time
+            index_buffer.size()*sizeof(GLuint),   // buffer size
+            index_buffer.data(),           // buffer data
+            GL_STATIC_DRAW); // specifies the nature of the memory:
+
+    m_mesh_VAO->bind();
+    {
+        m_mesh_VBO->bind();
+        m_mesh_EBO->bind();
+        // Position attribute 
+        gl::vertexAttribPointer(
+            0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+        gl::enableVertexAttribArray(0);
+        
+//         // TexCoord attribute  GARBAGE (but so we can see the random triangles!)
+        gl::vertexAttribPointer(
+            2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+        gl::enableVertexAttribArray(2);
+    }
+    m_mesh_VAO->unbind();
+ 
 }
 void OglTest::update()
 {
@@ -501,6 +626,38 @@ void OglTest::draw_cube(gl::GlslProgRef shader, float time_seconds, glm::vec3 po
     }
     m_cube_VAO->unbind();
 }
+void OglTest::draw_mesh()
+{
+    auto shader = m_Glsl_textured_with_color;
+    
+    shader->bind();
+    
+    glm::mat4 model;
+     model = glm::translate(model, glm::vec3(-0.5f, -0.5f, -0.5f));
+//     model = glm::rotate(model, radians, position);//glm::vec3(0.5f, 1.0f, 0.0f));
+//     model = glm::scale(model, glm::vec3(scale_factor));
+    shader->uniform("model",model);
+    
+    glm::mat4 view;
+    view = m_camera.getViewMatrix();
+    shader->uniform("view",view);
+    
+    glm::mat4 projection;
+    projection = m_camera.getProjectionMatrix();
+    shader->uniform("projection",projection);    
+
+    m_wooden_crate_texture->bind();
+    
+    m_mesh_VAO->bind();
+    {
+        gl::drawElements(
+            GL_TRIANGLES,
+            m_mesh_number_of_indeces,
+            GL_UNSIGNED_INT,
+            0);
+    }
+    m_mesh_VAO->unbind();
+}
 void OglTest::draw()
 {
 	gl::clear( Color( 0.2, 0.3, 0.4 ) );
@@ -518,8 +675,9 @@ void OglTest::draw()
     // draw_rectangle(time_span.count()); 
     
     //draw_triangle();
-    draw_cubes(time_span.count());
-    draw_lamp();
+//     draw_cubes(time_span.count());
+//     draw_lamp();
+    draw_mesh();
 }
 
 void OglTest::cleanup()
@@ -536,6 +694,11 @@ void OglTest::keyDown( KeyEvent key_event)
         else
             m_mouse_camera.enable();
     }
+    
+    if( key_event.getCode() == KeyEvent::KEY_r)
+    {
+        setupMesh();
+    }
 }
 fs::path OglTest::getSaveLoadPath()
 {
@@ -544,4 +707,46 @@ fs::path OglTest::getSaveLoadPath()
     return path;
 }
 
+void OglTest::triangles2dToVerticesAndIndices(
+    const vector<Vec6f> triangle_list,
+    vector<Vec2f>& vertex_list,
+    vector<int>& index_list)
+{
+    for(auto triangle: triangle_list)
+        for(auto vertex_number = 0; vertex_number <3; ++vertex_number) // for the 3 vertices
+        {
+            const auto x_coordinate = triangle[2 * vertex_number];
+            const auto y_coordinate = triangle[2 * vertex_number + 1];
+            const auto vertex = Vec2f(x_coordinate, y_coordinate);
+            const auto vertex_location =
+                find(vertex_list.begin(),vertex_list.end(),vertex);
+            if(vertex_location != vertex_list.end())
+            {
+                const auto vertex_location_pointer = vertex_location.base();
+                const auto vertex_index = vertex_location_pointer - vertex_list.data();
+                index_list.push_back(vertex_index);
+            }
+            else
+            {
+                index_list.push_back(vertex_list.size());
+                vertex_list.push_back(vertex); // increments the size
+                // but since the indeces start from zero, 
+                // the previous size is correct
+            }
+        }
+}
+
+void OglTest::Vec2fToVec3fWithRandomValues(
+    const vector<Vec2f>& vertex_list_2d,
+    vector<Vec3f>& vertex_list_3d)
+{
+    for(auto vertex :vertex_list_2d)
+    {
+        vertex_list_3d.push_back(
+            Vec3f(
+                vertex[0],
+                vertex[1],
+                0.1f*static_cast<float>( rand() ) / static_cast<float>( RAND_MAX )));
+    }
+}
 CINDER_APP( OglTest, RendererGl )

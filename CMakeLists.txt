@@ -70,8 +70,10 @@ ci_make_app(
 
 ci_make_app(
     APP_NAME    LearnOpenGL
+    INCLUDES    ${OpenCV_INCLUDE_DIRS}
     SOURCES     ${APP_PATH}/src/LearnOpenGL/main.cpp
 	CINDER_PATH ${CINDER_PATH}
     BLOCKS      UI
+    LIBRARIES   ${OpenCV_LIBS}
 )
 
