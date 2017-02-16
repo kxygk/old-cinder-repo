@@ -53,7 +53,7 @@ class OglTest : public App {
     void triangles2dToVerticesAndIndices(
         const vector<Vec6f> triangle_list,
         vector<Vec2f>& vertex_list,
-        vector<int>& index_list);
+        vector<GLint>& index_list);
     void Vec2fToVec3fWithRandomValues(
         const vector<Vec2f>& vertex_list_2d,
         vector<Vec3f>& vertex_list_3d);
@@ -482,7 +482,7 @@ void OglTest::setupMesh()
     // 2D triangles to EBO
     // ...
     vector<Vec2f> vertex_list_2d;
-    vector<int> index_list;
+    vector<GLint> index_list;
     triangles2dToVerticesAndIndices(
         clean_triangles,
         vertex_list_2d,
@@ -502,12 +502,7 @@ void OglTest::setupMesh()
         vertex_buffer.push_back(vertex[1]);
         vertex_buffer.push_back(vertex[2]);
     }
-    vector<GLint> index_buffer;
-    for(auto index : index_list)
-    {
-        index_buffer.push_back(index);
-    }
-    m_mesh_number_of_indeces = index_buffer.size(); // needed for drawing
+    m_mesh_number_of_indeces = index_list.size(); // needed for drawing
     
     m_mesh_VAO = gl::Vao::create();     
     m_mesh_VBO = 
@@ -520,8 +515,8 @@ void OglTest::setupMesh()
     m_mesh_EBO = 
         gl::Vbo::create(
             GL_ELEMENT_ARRAY_BUFFER, // EBO! this time
-            index_buffer.size()*sizeof(GLuint),   // buffer size
-            index_buffer.data(),           // buffer data
+            index_list.size()*sizeof(GLuint),   // buffer size
+            index_list.data(),           // buffer data
             GL_STATIC_DRAW); // specifies the nature of the memory:
 
     m_mesh_VAO->bind();
@@ -710,7 +705,7 @@ fs::path OglTest::getSaveLoadPath()
 void OglTest::triangles2dToVerticesAndIndices(
     const vector<Vec6f> triangle_list,
     vector<Vec2f>& vertex_list,
-    vector<int>& index_list)
+    vector<GLint>& index_list)
 {
     for(auto triangle: triangle_list)
         for(auto vertex_number = 0; vertex_number <3; ++vertex_number) // for the 3 vertices
