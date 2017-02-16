@@ -459,25 +459,25 @@ void OglTest::setupMesh()
     
     // due to some OpenCV bug there are 3 extra vertices.
     // Their associated triangles need to be removed
-    vector<Vec6f> clean_triangles;
-    for(auto triangle : triangle_list)
-    {
-        if( triangle[0] != 3 &&
-            triangle[1] != 3 &&
-            triangle[2] != 3 &&
-            triangle[3] != 3 &&
-            triangle[4] != 3 &&
-            triangle[5] != 3 &&
-            triangle[0] != -3 &&
-            triangle[1] != -3 &&
-            triangle[2] != -3 &&
-            triangle[3] != -3 &&
-            triangle[4] != -3 &&
-            triangle[5] != -3 )
-        {
-            clean_triangles.push_back(triangle);
-        }
-    }
+    vector<Vec6f> clean_triangles(triangle_list.size());
+    copy_if(
+        triangle_list.begin(),
+        triangle_list.end(),
+        clean_triangles.begin(),
+            [](Vec6f triangle)
+            { return (triangle[0] != 3 &&
+                triangle[1] != 3 &&
+                triangle[2] != 3 &&
+                triangle[3] != 3 &&
+                triangle[4] != 3 &&
+                triangle[5] != 3 &&
+                triangle[0] != -3 &&
+                triangle[1] != -3 &&
+                triangle[2] != -3 &&
+                triangle[3] != -3 &&
+                triangle[4] != -3 &&
+                triangle[5] != -3 );
+        } );
     
     // 2D triangles to EBO
     // ...
