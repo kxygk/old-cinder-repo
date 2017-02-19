@@ -226,7 +226,7 @@ void OglTest::setupGL_vertices()
     m_wooden_crate_texture =
         gl::Texture::create(
             loadImage(
-                loadAsset( "container.jpg" ) ) );
+                loadAsset( "container2.png" ) ) );
 
     m_triangle_vertices = {
         -0.2f, -0.2f, 0.0f, // Left  
