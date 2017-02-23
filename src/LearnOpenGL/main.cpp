@@ -89,7 +89,7 @@ class OglTest : public App {
     gl::VaoRef m_mesh_VAO;
     gl::VboRef m_mesh_VBO;
     gl::VboRef m_mesh_EBO;
-    int m_mesh_number_of_indeces;
+    int m_mesh_number_of_triangles;
 
     steady_clock::time_point m_start_time;
     
@@ -460,7 +460,7 @@ void OglTest::setupMesh()
     // due to some OpenCV bug there are 3 extra vertices.
     // Their associated triangles need to be removed
     vector<Vec6f> clean_triangles(triangle_list.size());
-    copy_if(
+    const auto end_it = copy_if(
         triangle_list.begin(),
         triangle_list.end(),
         clean_triangles.begin(),
@@ -478,51 +478,42 @@ void OglTest::setupMesh()
                 triangle[4] != -3 &&
                 triangle[5] != -3 );
         } );
-    
-    // 2D triangles to EBO
-    // ...
-    vector<Vec2f> vertex_list_2d;
-    vector<GLint> index_list;
-    triangles2dToVerticesAndIndices(
-        clean_triangles,
-        vertex_list_2d,
-        index_list);
-    
-    vector<Vec3f> vertex_list_3d;
-    Vec2fToVec3fWithRandomValues(
-        vertex_list_2d,
-        vertex_list_3d);
-    
-    // due to Vec2f and Vec3f's data types, the numbers are sequential
-    // need to put into temp buffers
-    vector<GLfloat> vertex_buffer;
-    for(auto vertex : vertex_list_3d)
+    clean_triangles.resize(std::distance(clean_triangles.begin(),end_it));
+    vector<GLfloat> triangle_buffer;
+    for(auto triangle : clean_triangles)
     {
-        vertex_buffer.push_back(vertex[0]);
-        vertex_buffer.push_back(vertex[1]);
-        vertex_buffer.push_back(vertex[2]);
+        triangle_buffer.push_back(triangle[0]);
+        triangle_buffer.push_back(triangle[1]);
+        srand(static_cast<int>(triangle[1]*1000));
+        triangle_buffer.push_back(
+            0.3f*static_cast<float>( rand() ) / static_cast<float>( RAND_MAX ));
+        triangle_buffer.push_back(triangle[2]);
+        triangle_buffer.push_back(triangle[3]);
+        srand(static_cast<int>(triangle[3]*1000));
+        triangle_buffer.push_back(
+            0.3f*static_cast<float>( rand() ) / static_cast<float>( RAND_MAX ));
+        triangle_buffer.push_back(triangle[4]);
+        triangle_buffer.push_back(triangle[5]);
+        srand(static_cast<int>(triangle[5]*1000));
+        triangle_buffer.push_back(
+            0.3f*static_cast<float>( rand() ) / static_cast<float>( RAND_MAX ));
     }
-    m_mesh_number_of_indeces = index_list.size(); // needed for drawing
-    
+    for(auto coordinate : triangle_buffer)
+    {
+        cout << coordinate << endl;
+    }
     m_mesh_VAO = gl::Vao::create();     
     m_mesh_VBO = 
         gl::Vbo::create(
             GL_ARRAY_BUFFER,
-            vertex_buffer.size()*sizeof(GLfloat),   // buffer size
-            vertex_buffer.data(),           // buffer data
+            triangle_buffer.size()*sizeof(GLfloat),   // buffer size
+            triangle_buffer.data(),           // buffer data
             GL_STATIC_DRAW); // specifies the nature of the memory:
-
-    m_mesh_EBO = 
-        gl::Vbo::create(
-            GL_ELEMENT_ARRAY_BUFFER, // EBO! this time
-            index_list.size()*sizeof(GLuint),   // buffer size
-            index_list.data(),           // buffer data
-            GL_STATIC_DRAW); // specifies the nature of the memory:
-
+    m_mesh_number_of_triangles = triangle_buffer.size();
+        
     m_mesh_VAO->bind();
     {
         m_mesh_VBO->bind();
-        m_mesh_EBO->bind();
         // Position attribute 
         gl::vertexAttribPointer(
             0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
@@ -645,11 +636,10 @@ void OglTest::draw_mesh()
     
     m_mesh_VAO->bind();
     {
-        gl::drawElements(
+        gl::drawArrays(
             GL_TRIANGLES,
-            m_mesh_number_of_indeces,
-            GL_UNSIGNED_INT,
-            0);
+            0,
+            m_mesh_number_of_triangles);
     }
     m_mesh_VAO->unbind();
 }
