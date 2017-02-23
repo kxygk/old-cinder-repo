@@ -486,17 +486,26 @@ void OglTest::setupMesh()
         triangle_buffer.push_back(triangle[1]);
         srand(static_cast<int>(triangle[1]*1000));
         triangle_buffer.push_back(
-            0.3f*static_cast<float>( rand() ) / static_cast<float>( RAND_MAX ));
+            0.3f*
+            static_cast<float>( rand() ) / static_cast<float>( RAND_MAX ));
+        triangle_buffer.push_back(0.0f);
+        triangle_buffer.push_back(0.0f);
         triangle_buffer.push_back(triangle[2]);
         triangle_buffer.push_back(triangle[3]);
         srand(static_cast<int>(triangle[3]*1000));
         triangle_buffer.push_back(
-            0.3f*static_cast<float>( rand() ) / static_cast<float>( RAND_MAX ));
+            0.3f*
+            static_cast<float>( rand() ) / static_cast<float>( RAND_MAX ));
+        triangle_buffer.push_back(1.0f);
+        triangle_buffer.push_back(0.0f);
         triangle_buffer.push_back(triangle[4]);
         triangle_buffer.push_back(triangle[5]);
         srand(static_cast<int>(triangle[5]*1000));
         triangle_buffer.push_back(
-            0.3f*static_cast<float>( rand() ) / static_cast<float>( RAND_MAX ));
+            0.3f*
+            static_cast<float>( rand() ) / static_cast<float>( RAND_MAX ));
+        triangle_buffer.push_back(0.5f);
+        triangle_buffer.push_back(1.0f);
     }
     for(auto coordinate : triangle_buffer)
     {
@@ -516,12 +525,12 @@ void OglTest::setupMesh()
         m_mesh_VBO->bind();
         // Position attribute 
         gl::vertexAttribPointer(
-            0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+            0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
         gl::enableVertexAttribArray(0);
         
 //         // TexCoord attribute  GARBAGE (but so we can see the random triangles!)
         gl::vertexAttribPointer(
-            2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+            2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
         gl::enableVertexAttribArray(2);
     }
     m_mesh_VAO->unbind();
