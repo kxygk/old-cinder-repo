@@ -404,7 +404,7 @@ void OglTest::setupGL_rectangle()
             1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
         gl::enableVertexAttribArray(1);
         
-        // TexCoord attribute 
+        // TexCoord attribute
         // (third input, 2)
         gl::vertexAttribPointer(
             2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
@@ -482,28 +482,69 @@ void OglTest::setupMesh()
     vector<GLfloat> triangle_buffer;
     for(auto triangle : clean_triangles)
     {
-        triangle_buffer.push_back(triangle[0]);
-        triangle_buffer.push_back(triangle[1]);
+        //vertex 1
+        // position
         srand(static_cast<int>(triangle[1]*1000));
-        triangle_buffer.push_back(
+        const auto random_depth_one =
             0.3f*
-            static_cast<float>( rand() ) / static_cast<float>( RAND_MAX ));
-        triangle_buffer.push_back(0.0f);
-        triangle_buffer.push_back(0.0f);
-        triangle_buffer.push_back(triangle[2]);
-        triangle_buffer.push_back(triangle[3]);
+            static_cast<float>( rand() ) 
+            / static_cast<float>( RAND_MAX );
+        const auto vertex_one = vec3(
+            triangle[0],
+            triangle[1],
+            random_depth_one);
+        
+        //vertex 2
+        // position
         srand(static_cast<int>(triangle[3]*1000));
-        triangle_buffer.push_back(
+        const auto random_depth_two =
             0.3f*
-            static_cast<float>( rand() ) / static_cast<float>( RAND_MAX ));
+            static_cast<float>( rand() ) 
+            / static_cast<float>( RAND_MAX );
+        const auto vertex_two = vec3(
+            triangle[2],
+            triangle[3],
+            random_depth_two);
+        
+        //vertex 3
+        // position
+        srand(static_cast<int>(triangle[5]*1000));
+        const auto random_depth_three =
+            0.3f*
+            static_cast<float>( rand() ) 
+            / static_cast<float>( RAND_MAX );
+        const auto vertex_three = vec3(
+            triangle[4],
+            triangle[5],
+            random_depth_three);
+        
+        const auto normal_vector = 
+            cross(
+                (vertex_two - vertex_one),
+                (vertex_three - vertex_one));
+        
+        triangle_buffer.push_back(vertex_one.x);
+        triangle_buffer.push_back(vertex_one.y);
+        triangle_buffer.push_back(vertex_one.z);
+        triangle_buffer.push_back(normal_vector.x);
+        triangle_buffer.push_back(normal_vector.y);
+        triangle_buffer.push_back(normal_vector.z);
+        triangle_buffer.push_back(0.0f);
+        triangle_buffer.push_back(0.0f);
+        triangle_buffer.push_back(vertex_two.x);
+        triangle_buffer.push_back(vertex_two.y);
+        triangle_buffer.push_back(vertex_two.z);
+        triangle_buffer.push_back(normal_vector.x);
+        triangle_buffer.push_back(normal_vector.y);
+        triangle_buffer.push_back(normal_vector.z);
         triangle_buffer.push_back(1.0f);
         triangle_buffer.push_back(0.0f);
-        triangle_buffer.push_back(triangle[4]);
-        triangle_buffer.push_back(triangle[5]);
-        srand(static_cast<int>(triangle[5]*1000));
-        triangle_buffer.push_back(
-            0.3f*
-            static_cast<float>( rand() ) / static_cast<float>( RAND_MAX ));
+        triangle_buffer.push_back(vertex_three.x);
+        triangle_buffer.push_back(vertex_three.y);
+        triangle_buffer.push_back(vertex_three.z);
+        triangle_buffer.push_back(normal_vector.x);
+        triangle_buffer.push_back(normal_vector.y);
+        triangle_buffer.push_back(normal_vector.z);
         triangle_buffer.push_back(0.5f);
         triangle_buffer.push_back(1.0f);
     }
@@ -525,12 +566,17 @@ void OglTest::setupMesh()
         m_mesh_VBO->bind();
         // Position attribute 
         gl::vertexAttribPointer(
-            0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+            0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
         gl::enableVertexAttribArray(0);
         
-//         // TexCoord attribute  GARBAGE (but so we can see the random triangles!)
+        // Normal Vectors 
         gl::vertexAttribPointer(
-            2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+            1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+        gl::enableVertexAttribArray(1);
+        
+        // TexCoord attribute  
+        gl::vertexAttribPointer(
+            2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
         gl::enableVertexAttribArray(2);
     }
     m_mesh_VAO->unbind();
