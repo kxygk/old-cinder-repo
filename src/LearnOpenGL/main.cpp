@@ -591,7 +591,7 @@ void OglTest::draw_cubes(float time_seconds)
 }
 void OglTest::draw_lamp()
 {
-    draw_cube(m_Glsl_lamp_box,0.0f,vec3(0.1f,0.1f,0.1f),0.3f);
+    draw_cube(m_Glsl_lamp_box,0.0f,vec3(2.0f,2.0f,-2.0f),0.3f);
 }
 void OglTest::draw_cube(gl::GlslProgRef shader, float time_seconds, glm::vec3 position,float scale_factor)
 {
@@ -628,9 +628,9 @@ void OglTest::draw_mesh()
     shader->bind();
     
     glm::mat4 model;
-     model = glm::translate(model, glm::vec3(-0.5f, -0.5f, -0.5f));
+     model = glm::translate(model, glm::vec3(-2.0f, -2.0f, -4.0f));
 //     model = glm::rotate(model, radians, position);//glm::vec3(0.5f, 1.0f, 0.0f));
-//     model = glm::scale(model, glm::vec3(scale_factor));
+    model = glm::scale(model, glm::vec3(4));
     shader->uniform("model",model);
     
     glm::mat4 view;
@@ -670,7 +670,7 @@ void OglTest::draw()
     
     //draw_triangle();
 //     draw_cubes(time_span.count());
-//     draw_lamp();
+    draw_lamp();
     draw_mesh();
 }
 
